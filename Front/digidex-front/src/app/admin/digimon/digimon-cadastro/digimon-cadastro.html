@@ -1,0 +1,247 @@
+<section class="cadastro-shell">
+	<header class="cadastro-header">
+		<h1>Cadastro de Digimon</h1>
+		<p>Cadastre imagem, dados basicos, nivel e base/max stats no mesmo padrao da tela de detalhes.</p>
+	</header>
+	<div
+		class="success-message"
+		*ngIf="successMessage()"
+		>
+		{{ successMessage() }}
+	</div>
+
+	<form class="cadastro-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+		<section class="panel">
+			<h2>Informacoes principais</h2>
+			<div class="basic-grid">
+				<div class="image-column">
+					<div class="image-preview" [class.has-image]="!!imagePreview()">
+						<img *ngIf="imagePreview()" [src]="imagePreview()" alt="Preview do Digimon" />
+						<span *ngIf="!imagePreview()">Preview da imagem</span>
+					</div>
+
+					<label class="file-input">
+						<span>Selecionar imagem</span>
+						<input type="file" accept="image/*" (change)="onFileSelected($event)" />
+					</label>
+
+				</div>
+
+				<div class="fields-column">
+					<label>
+						Nome do Digimon
+						<input type="text" formControlName="name" placeholder="Ex.: Agumon" />
+					</label>
+					<small class="error" *ngIf="formSubmitted() && form.controls.name.invalid">Informe um nome valido.</small>
+
+					<label>
+						Nivel
+						<select formControlName="level">
+							<option *ngFor="let level of levelOptions" [value]="level">{{ level }}</option>
+						</select>
+					</label>
+
+					<div class="inline-fields">
+						<label>
+							Atributo
+							<select formControlName="attribute">
+								<option *ngFor="let attribute of attributeOptions" [value]="attribute">{{ attribute }}</option>
+							</select>
+						</label>
+
+						<label>
+							Type
+							<select formControlName="digimonType">
+								<option *ngFor="let type of typeOptions" [value]="type">{{ type }}</option>
+							</select>
+						</label>
+					</div>
+
+					<label>
+						Descricao
+						<textarea formControlName="description" rows="5" placeholder="Descricao do Digimon"></textarea>
+					</label>
+					<small class="error" *ngIf="formSubmitted() && form.controls.description.invalid">
+						Informe uma descricao com pelo menos 20 caracteres.
+					</small>
+				</div>
+			</div>
+
+			<div class="previous-digimons">
+				<p>Digimons anteriores (evoluem para este)</p>
+
+				<label>
+					Buscar Digimon anterior
+					<input
+						type="text"
+						placeholder="Digite para buscar (ex.: Agu, Vee, Draco...)"
+						[value]="previousSearch()"
+						(input)="onPreviousSearchChange($any($event.target).value)"
+						(keydown.enter)="$event.preventDefault(); addFirstPreviousFromSearch()"
+					/>
+				</label>
+
+				<div class="search-results" *ngIf="previousSearch().trim().length > 0 && filteredPreviousDigimonOptions.length">
+				<button
+					type="button"
+					class="result-item"
+					*ngFor="let prev of filteredPreviousDigimonOptions"
+					(click)="addPreviousDigimon(prev)"
+				>
+					{{ prev.name }}
+				</button>
+				</div>
+
+				<small class="muted" *ngIf="previousSearch().trim().length > 0 && filteredPreviousDigimonOptions.length">
+					Pressione Enter para adicionar o primeiro resultado rapidamente.
+				</small>
+
+				<small class="muted" *ngIf="previousSearch().trim().length >= 1 && !filteredPreviousDigimonOptions.length">
+					Nenhum Digimon encontrado para essa busca.
+				</small>
+
+				<div class="selected-previous-list" *ngIf="hasPreviousDigimonSelection()" formArrayName="previousEvolutions">
+					<div
+						class="selected-previous-row"
+						*ngFor="let evo of previousEvolutionsArray.controls; let i = index"
+						[formGroupName]="i"
+					>
+						<span class="selected-name">{{ getPreviousEvolutionControl(i, 'name').value }}</span>
+						<button
+							type="button"
+							class="selected-remove"
+							aria-label="Remover digimon"
+							(click)="removePreviousDigimon(getPreviousEvolutionControl(i, 'name').value)"
+						>
+							x
+						</button>
+					</div>
+				</div>
+
+				<label>
+					Condicao de evolucao (igual para todos)
+					<input
+						type="text"
+						formControlName="evolutionCondition"
+						placeholder="Ex.: INT > 500 ou Amizade >= 30"
+					/>
+				</label>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="stats-header">
+				<h2>Base stats e max stats</h2>
+				<span>Base {{ getTotal('stats') }} | Max {{ getTotal('maxStats') }}</span>
+			</div>
+
+			<div class="stats-rows">
+				<div class="stat-card" *ngFor="let stat of statOrder">
+					<div class="stat-card-header">
+						<span class="stat-label">{{ stat.label }}</span>
+						<span class="stat-ratio">{{ getStatControl('stats', stat.key).value ?? 0 }} / {{ getStatControl('maxStats', stat.key).value ?? 0 }}</span>
+					</div>
+					<div class="bar-wrap">
+						<div
+							class="bar"
+							[style.width.%]="(getStatControl('maxStats', stat.key).value ?? 0) === 0 ? 0 : ((getStatControl('stats', stat.key).value ?? 0) / (getStatControl('maxStats', stat.key).value ?? 1)) * 100"
+						></div>
+					</div>
+
+					<div class="stat-inputs">
+						<label>
+							Base
+							<input class="stat-input" type="number" min="0" [formControl]="getStatControl('stats', stat.key)" />
+						</label>
+						<label>
+							Max
+							<input class="stat-input" type="number" min="0" [formControl]="getStatControl('maxStats', stat.key)" />
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<small class="error" *ngIf="formSubmitted() && statOrder.some((stat) => hasStatMismatch(stat.key))">
+				O valor de Max precisa ser maior ou igual ao valor Base em todos os atributos.
+			</small>
+		</section>
+
+		<section class="panel">
+			<div class="moves-header">
+				<h2>Golpes</h2>
+				<button type="button" class="btn-secondary" (click)="addMove()">+ Adicionar golpe</button>
+			</div>
+
+			<div class="moves-list" formArrayName="moves">
+				<div class="move-card" *ngFor="let moveGroup of movesArray.controls; let i = index" [formGroupName]="i">
+					<div class="move-card-header">
+						<h3>Golpe {{ i + 1 }}</h3>
+						<button type="button" class="btn-link" (click)="removeMove(i)" [disabled]="movesArray.length <= 1">Remover</button>
+					</div>
+
+					<div class="moves-grid">
+						<label>
+							Tipo do golpe
+							<select formControlName="category">
+								<option *ngFor="let category of moveCategoryOptions" [value]="category">{{ category }}</option>
+							</select>
+						</label>
+						<label>
+							Atributo
+							<select formControlName="attribute">
+								<option
+									*ngFor="let attribute of attributeOptions"
+									[value]="attribute">
+									{{ attribute }}
+								</option>
+							</select>
+						</label>
+						<label>
+							Nome
+							<input type="text" formControlName="name" placeholder="Ex.: Pepper Breath" />
+						</label>
+
+						<label>
+							Level
+							<input type="number" min="1" formControlName="level" />
+						</label>
+
+						<label>
+							Precisao (%)
+							<input type="number" min="0" max="100" formControlName="accuracy" />
+						</label>
+
+						<label>
+							Poder
+							<input type="number" min="0" formControlName="power" />
+						</label>
+
+						<label>
+							SP Cost
+							<input type="number" min="0" formControlName="spCost" />
+						</label>
+
+						<label class="full-row">
+							Descricao
+							<textarea rows="3" formControlName="description" placeholder="Descricao do golpe"></textarea>
+						</label>
+					</div>
+
+					<small class="error" *ngIf="formSubmitted() && moveGroup.invalid">
+						Preencha todos os campos do golpe corretamente.
+					</small>
+				</div>
+			</div>
+		</section>
+
+		<section class="actions">
+			<button type="submit" class="btn-primary">Salvar cadastro</button>
+			<button type="button" class="btn-secondary" (click)="resetForm()">Limpar formulario</button>
+		</section>
+	</form>
+
+	<section class="panel payload" *ngIf="submittedPayload()">
+		<h2>Payload gerado</h2>
+		<pre>{{ submittedPayload() }}</pre>
+	</section>
+</section>

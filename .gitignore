@@ -1,0 +1,23 @@
+# Angular
+frontend-angular/node_modules/
+frontend-angular/dist/
+frontend-angular/.angular/
+
+# Java Maven
+backend-java/target/
+
+# Java Gradle
+backend-java/build/
+backend-java/.gradle/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db

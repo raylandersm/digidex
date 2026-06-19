@@ -1,0 +1,68 @@
+<section class="home-banner">
+  <div class="banner-inner">
+    <div>
+      <p class="eyebrow">Bem-vindo à Digidex</p>
+      <h1>Descubra Digimons em cards e organize sua coleção</h1>
+      <p>Pesquise por nome, tipo ou nível e encontre seu próximo parceiro digital.</p>
+    </div>
+    <div class="banner-visual">
+      <img src="https://digimon.shadowsmith.com/img/agumon.jpg" alt="Agumon banner" />
+    </div>
+  </div>
+</section>
+
+<section class="home-search">
+  <div class="search-card">
+    <div class="search-header">
+      <h2>Buscar Digimon</h2>
+      <p>Filtre a lista rapidamente e veja os resultados em tempo real.</p>
+    </div>
+    <div class="search-field">
+      <input
+        type="search"
+        placeholder="Nome, nível ou tipo"
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+</section>
+
+<section class="digimon-list">
+  <div class="list-header">
+    <h2>{{ filteredDigimons().length ? 'Digimons encontrados' : 'Nenhum resultado' }}</h2>
+    <span>{{ filteredDigimons().length }} itens</span>
+  </div>
+
+  <div class="cards-grid">
+    <article class="card" *ngFor="let digimon of filteredDigimons()">
+      <a [routerLink]="['/digimon', digimon.id]" class="card-link">
+        <div class="card-image">
+          <img
+            [src]="'http://localhost:9000/digidex/' + digimon.imageUrl"
+            [alt]="digimon.name"
+          />
+        </div>
+        <div class="card-content">
+          <h3>{{ digimon.name }}</h3>
+          <div class="card-tags">
+            <span class="tag tag-level">{{ digimon.level | formatLabel }}</span>
+            <span
+              class="tag tag-type"
+              [class.vaccine]="digimon.type === 'VACCINE'"
+              [class.data]="digimon.type === 'DATA'"
+              [class.virus]="digimon.type === 'VIRUS'"
+              [class.nodata]="digimon.type === 'NODATA'"
+            >
+              {{ digimon.type | formatLabel }}
+            </span>
+            <span class="tag tag-attribute" *ngIf="digimon.digimonAttribute">
+              {{ digimon.digimonAttribute | formatLabel }}
+            </span>
+          </div>
+        </div>
+      </a>
+    </article>
+  </div>
+</section>
+
