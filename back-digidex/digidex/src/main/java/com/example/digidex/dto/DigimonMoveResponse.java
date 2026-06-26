@@ -1,5 +1,6 @@
 package com.example.digidex.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public record DigimonMoveResponse(
@@ -16,11 +17,10 @@ public record DigimonMoveResponse(
 
         Integer spCost,
 
-        String attribute,
+        List<MoveVariantResponse> variants,
 
-        String type,
+        String type
 
-        Integer level
 
 ) {
 }

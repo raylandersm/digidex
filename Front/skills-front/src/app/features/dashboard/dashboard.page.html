@@ -1,0 +1,58 @@
+<section class="panel">
+  <header class="hero">
+    <h1>Digimon Registry Hub</h1>
+    <p>Controle seu bestiario digital em um unico lugar.</p>
+  </header>
+
+  <div class="kpis">
+    <article class="kpi-card">
+      <span>Digimons</span>
+      <strong>{{ totals().digimons }}</strong>
+    </article>
+    <article class="kpi-card">
+      <span>Skills</span>
+      <strong>{{ totals().skills }}</strong>
+    </article>
+    <article class="kpi-card">
+      <span>Linhas</span>
+      <strong>{{ totals().lines }}</strong>
+    </article>
+  </div>
+
+  <div class="shortcuts">
+    @for (item of shortcuts; track item.route) {
+      <a [routerLink]="item.route" class="shortcut-card">
+        <h2>{{ item.title }}</h2>
+        <p>{{ item.description }}</p>
+      </a>
+    }
+  </div>
+
+  <section class="timeline-preview">
+    <h2>Linhas evolutivas recentes</h2>
+
+    @if (latestLines().length === 0) {
+      <p class="empty">Nenhuma linha cadastrada ainda.</p>
+    } @else {
+      <div class="lines">
+        @for (line of latestLines(); track line.id) {
+          <article class="line-card">
+            <h3>{{ line.name }}</h3>
+            <p>{{ line.description }}</p>
+            <ol>
+              @for (step of line.steps; track step.order) {
+                <li>
+                  <strong>{{ step.order }}.</strong>
+                  {{ resolveDigimonName(step.digimonId) }}
+                  @if (step.note) {
+                    <span>- {{ step.note }}</span>
+                  }
+                </li>
+              }
+            </ol>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

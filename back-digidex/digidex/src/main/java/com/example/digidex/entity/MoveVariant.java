@@ -1,5 +1,6 @@
 package com.example.digidex.entity;
 
+import com.example.digidex.entity.Move;
 import com.example.digidex.enums.MoveAttribute;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,31 +9,30 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+@Entity
+@Table(name = "move_variant")
 @Getter
 @Setter
-@Entity
-@Table(name = "move")
-public class Move {
+public class MoveVariant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String name;
+    @ManyToOne
+    private Move move;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    private Integer accuracy;
-
-    private Integer power;
-
-    private Integer spCost;
+    @Enumerated(EnumType.STRING)
+    private MoveAttribute attribute;
 
     @OneToMany(
-            mappedBy = "move",
+            mappedBy = "moveVariant",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<MoveVariant> variants = new ArrayList<>();
+    private List<MoveEffect> effects = new ArrayList<>();
+
+    private Boolean hasSpecialEffect;
+
 }

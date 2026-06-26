@@ -22,7 +22,7 @@ export class DigimonCadastro implements OnInit {
 
 
   protected readonly levelOptions = ['Baby I', 'Baby II', 'Roockie', 'Champion', 'Ultimate', 'Mega', 'Mega+'];
-  protected readonly attributeOptions = ['Flame', 'Water', 'Plant', 'Wind', 'Earth', 'Electric', 'Light', 'Dark','Steel', 'Neutral'];
+  protected readonly attributeOptions = ['Flame', 'Water', 'Plant', 'Wind', 'Earth', 'Electric', 'Light', 'Dark', 'Steel', 'Neutral'];
   protected readonly typeOptions = ['Vaccine', 'Virus', 'Data', 'Free', 'NoData'];
   protected readonly moveCategoryOptions: Array<'Principal' | 'Aprendivel'> = ['Principal', 'Aprendivel'];
   protected previousDigimonOptions: DigimonOption[] = [];
@@ -39,7 +39,7 @@ export class DigimonCadastro implements OnInit {
   ];
 
   protected readonly successMessage =
-  signal('');
+    signal('');
 
   protected readonly imagePreview = signal('');
   protected selectedImageFile: File | null = null;
@@ -64,30 +64,54 @@ export class DigimonCadastro implements OnInit {
   ngOnInit(): void {
 
 
-  this.digimonService
-    .findAll()
-    .subscribe({
-      next: (response) => {
+    this.digimonService
+      .findAll()
+      .subscribe({
+        next: (response) => {
 
 
-        this.previousDigimonOptions =
-          response;
+          this.previousDigimonOptions =
+            response;
 
-      },
+        },
 
-      error: (error) => {
+        error: (error) => {
 
-        console.error(error);
+          console.error(error);
 
-      }
-    });
-}
+        }
+      });
+  }
   protected get movesArray(): FormArray<FormGroup> {
     return this.form.controls.moves as FormArray<FormGroup>;
   }
 
   protected get previousEvolutionsArray(): FormArray<FormGroup> {
     return this.form.controls.previousEvolutions;
+  }
+
+  protected addVariant(
+    moveIndex: number
+  ): void {
+
+    this.getVariantsArray(
+      moveIndex
+    ).push(
+      this.createVariantGroup()
+    );
+  }
+
+  protected addEffect(
+    moveIndex: number,
+    variantIndex: number
+  ): void {
+
+    this.getEffectsArray(
+      moveIndex,
+      variantIndex
+    ).push(
+      this.createEffectGroup()
+    );
   }
 
   protected onImageUrlChange(): void {
@@ -213,7 +237,7 @@ export class DigimonCadastro implements OnInit {
     return this.form.get([group, key]) as FormControl<number | null>;
   }
 
-  protected getMoveControl(index: number, key: 'category' | 'name' | 'description' | 'accuracy' | 'power' | 'spCost' | 'level'): FormControl {
+  protected getMoveControl(index: number, key: 'category' | 'name' | 'description' | 'accuracy' | 'power' | 'spCost'): FormControl {
     return this.movesArray.at(index).get(key) as FormControl;
   }
 
@@ -239,7 +263,18 @@ export class DigimonCadastro implements OnInit {
     return max < base;
   }
 
-  
+  protected removeVariant(
+  moveIndex: number,
+  variantIndex: number
+): void {
+
+  this.getVariantsArray(
+    moveIndex
+  ).removeAt(
+    variantIndex
+  );
+}
+
 
   protected resetForm(): void {
     this.selectedImageFile = null;
@@ -255,7 +290,9 @@ export class DigimonCadastro implements OnInit {
       imageUrl: '',
       stats: this.getInitialStats(),
       maxStats: this.getInitialStats(),
-      moves: [this.getInitialMove()],
+      moves: [this.movesArray.push(
+              this.createMoveGroup()
+            )],
     });
     this.previousEvolutionsArray.clear();
     this.movesArray.clear();
@@ -279,22 +316,73 @@ export class DigimonCadastro implements OnInit {
   }
 
   private createMoveGroup(): FormGroup {
-    const initial = this.getInitialMove();
     return this.fb.group({
-      moveId: [initial.moveId],
-      category: [initial.category, Validators.required],
-      attribute: [initial.attribute, Validators.required],
-      name: [initial.name, [Validators.required, Validators.minLength(2)]],
-      description: [initial.description, [Validators.required, Validators.minLength(8)]],
-      accuracy: [initial.accuracy, [Validators.required, Validators.min(0), Validators.max(100)]],
-      power: [initial.power, []],
-      spCost: [initial.spCost, [Validators.required, Validators.min(0)]],
-      level: [initial.level, [Validators.required, Validators.min(1)]],
+      moveId: [null],
+
+      category: ['Principal', Validators.required],
+
+      name: ['', Validators.required],
+
+      description: ['', Validators.required],
+
+      accuracy: [100],
+
+      power: [0],
+
+      spCost: [0],
+
+      variants: this.fb.array([
+        this.createVariantGroup()
+      ])
     });
   }
 
+
+private createVariantGroup(): FormGroup {
+
+  return this.fb.group({
+
+    attribute: ['DARK', Validators.required],
+
+    effects: this.fb.array([])
+
+  });
+
+}
+
+
+  private createEffectGroup(): FormGroup {
+  return this.fb.group({
+    statusEffectId: [null],
+    chance: [0],
+    vulnerableTo: [null],
+    bonusDamagePercent: [0],
+    removedBy: [null]
+  });
+}
+
+  protected getVariantsArray(
+    moveIndex: number
+  ): FormArray {
+
+    return this.movesArray
+      .at(moveIndex)
+      .get('variants') as FormArray;
+  }
+
+  protected getEffectsArray(
+    moveIndex: number,
+    variantIndex: number
+  ): FormArray {
+
+    return this.getVariantsArray(moveIndex)
+      .at(variantIndex)
+      .get('effects') as FormArray;
+  }
+
+
   protected onSubmit(): void {
-    
+
 
     const hasMismatch = this.statOrder.some((stat) => this.hasStatMismatch(stat.key));
     if (hasMismatch) {
@@ -307,80 +395,110 @@ export class DigimonCadastro implements OnInit {
 
     if (this.form.invalid) {
 
-      this.form.markAllAsTouched();
+      console.log(this.form);
+
+  console.log(
+    'INVALIDO MAS VOU CONTINUAR'
+  );
 
       return;
     }
 
     const payload = {
-  name: raw.name ?? '',
+      name: raw.name ?? '',
 
-  description: raw.description ?? '',
+      description: raw.description ?? '',
 
-  level: this.mapLevel(raw.level),
+      level: this.mapLevel(raw.level),
 
-  digimonAttribute:
-    raw.attribute?.toUpperCase(),
-
-  type:
-    raw.digimonType?.toUpperCase(),
-
-  evolutionCondition:
-    raw.evolutionCondition ?? '',
-  
-  stats: {
-    hp: raw.stats?.['hp'],
-    sp: raw.stats?.['sp'],
-    atk: raw.stats?.['atk'],
-    def: raw.stats?.['def'],
-    intel: raw.stats?.['int'],
-    spi: raw.stats?.['spi'],
-    spd: raw.stats?.['spd']
-  },
-
-  maxStats: {
-    hp: raw.maxStats?.['hp'],
-    sp: raw.maxStats?.['sp'],
-    atk: raw.maxStats?.['atk'],
-    def: raw.maxStats?.['def'],
-    intel: raw.maxStats?.['int'],
-    spi: raw.maxStats?.['spi'],
-    spd: raw.maxStats?.['spd']
-  },
-
-  previousEvolutionIds:
-    ((raw.previousEvolutions ?? []) as Array<{ id?: string }>)
-      .map((evo) => evo.id)
-      .filter(Boolean),
-        
-
-  moves:
-    (raw.moves ?? []).map((move: any) => ({
-      moveId: move.moveId,
-
-      moveName: move.name,
-
-      description: move.description,
-
-      accuracy: move.accuracy,
-
-      power: move.power,
-
-      spCost: move.spCost,
-
-      attribute:
-        move.attribute?.toUpperCase(),
+      digimonAttribute:
+        raw.attribute?.toUpperCase(),
 
       type:
-        move.category === 'Principal'
-          ? 'PRINCIPAL'
-          : 'APRENDIVEL',
+        raw.digimonType?.toUpperCase(),
 
-      level: move.level
-    }))
-};
+      evolutionCondition:
+        raw.evolutionCondition ?? '',
 
-        
+      stats: {
+        hp: raw.stats?.['hp'],
+        sp: raw.stats?.['sp'],
+        atk: raw.stats?.['atk'],
+        def: raw.stats?.['def'],
+        intel: raw.stats?.['int'],
+        spi: raw.stats?.['spi'],
+        spd: raw.stats?.['spd']
+      },
+
+      maxStats: {
+        hp: raw.maxStats?.['hp'],
+        sp: raw.maxStats?.['sp'],
+        atk: raw.maxStats?.['atk'],
+        def: raw.maxStats?.['def'],
+        intel: raw.maxStats?.['int'],
+        spi: raw.maxStats?.['spi'],
+        spd: raw.maxStats?.['spd']
+      },
+
+      previousEvolutionIds:
+        ((raw.previousEvolutions ?? []) as Array<{ id?: string }>)
+          .map((evo) => evo.id)
+          .filter(Boolean),
+
+
+      moves:
+  (raw.moves ?? []).map((move: any) => ({
+
+    moveId: move.moveId,
+
+    moveName: move.name,
+
+    description: move.description,
+
+    accuracy: move.accuracy,
+
+    power: move.power,
+
+    spCost: move.spCost,
+
+    type:
+      move.category === 'Principal'
+        ? 'PRINCIPAL'
+        : 'APRENDIVEL',
+
+    variants:
+      (move.variants ?? []).map(
+        (variant: any) => ({
+
+          attribute:
+            variant.attribute?.toUpperCase(),
+
+          effects:
+            (variant.effects ?? []).map(
+              (effect: any) => ({
+
+                statusEffectId:
+                  effect.statusEffectId,
+
+                chance:
+                  effect.chance,
+
+                vulnerableTo:
+                  effect.vulnerableTo,
+
+                bonusDamagePercent:
+                  effect.bonusDamagePercent,
+
+                removedBy:
+                  effect.removedBy
+              })
+            )
+        })
+      )
+  }))
+    };
+
+
     const formData = new FormData();
 
     formData.append(
@@ -400,47 +518,47 @@ export class DigimonCadastro implements OnInit {
         this.selectedImageFile
       );
     }
-    
+
 
     this.digimonService
-  .create(formData)
-  .subscribe({
+      .create(formData)
+      .subscribe({
 
-    next: (id) => {
+        next: (id) => {
 
-       window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+
+          this.successMessage.set(
+            'Digimon cadastrado com sucesso!'
+          );
+
+          setTimeout(() => {
+            this.successMessage.set('');
+          }, 3000);
+
+          this.resetForm();
+
+          console.log(
+            'Digimon criado:',
+            id
+          );
+
+        },
+
+        error: (error) => {
+
+          console.error(error);
+
+          alert(
+            'Erro ao cadastrar Digimon.'
+          );
+
+        }
       });
-
-      this.successMessage.set(
-        'Digimon cadastrado com sucesso!'
-      );
-
-      setTimeout(() => {
-        this.successMessage.set('');
-      }, 3000);
-
-      this.resetForm();
-
-      console.log(
-        'Digimon criado:',
-        id
-      );
-
-    },
-
-    error: (error) => {
-
-      console.error(error);
-
-      alert(
-        'Erro ao cadastrar Digimon.'
-      );
-
-    }
-  });
-}
+  }
 
   private createPreviousEvolutionGroup(
     id: string,
@@ -465,29 +583,17 @@ export class DigimonCadastro implements OnInit {
     };
   }
 
-  private getInitialMove(): {
-    moveId: string | null;
-    category: 'Principal' | 'Aprendivel';
-    attribute: string;
-    name: string;
-    description: string;
-    accuracy: number;
-    power: number;
-    spCost: number;
-    level: number;
-  } {
-    return {
-      moveId: null,
-      category: 'Principal',
-      attribute: 'Flame',
-      name: '',
-      description: '',
-      accuracy: 100,
-      power: 0,
-      spCost: 0,
-      level: 1,
-    };
-  }
+  private getInitialMove() {
+  return {
+    moveId: null,
+    category: 'Principal',
+    name: '',
+    description: '',
+    accuracy: 100,
+    power: 0,
+    spCost: 0
+  };
+}
 
   private mapLevel(level: string | null | undefined): string {
 

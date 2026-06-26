@@ -1,0 +1,70 @@
+<section class="page">
+  <header>
+    <h1>Cadastro de Skills</h1>
+    <p>Defina golpes e mantenha o arsenal dos seus Digimons atualizado.</p>
+  </header>
+
+  <div class="grid">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="card form-card">
+      <h2>@if (editingId() !== null) { Editar Skill } @else { Nova Skill }</h2>
+
+      <label>
+        Nome
+        <input type="text" formControlName="name" />
+      </label>
+
+      <label>
+        Tipo
+        <input type="text" formControlName="type" />
+      </label>
+
+      <div class="inline-fields">
+        <label>
+          Poder
+          <input type="number" formControlName="power" />
+        </label>
+
+        <label>
+          Custo de Memoria
+          <input type="number" formControlName="memoryCost" />
+        </label>
+      </div>
+
+      <label>
+        Descricao
+        <textarea rows="3" formControlName="description"></textarea>
+      </label>
+
+      <div class="actions">
+        <button type="submit">@if (editingId() !== null) { Salvar } @else { Cadastrar }</button>
+        @if (editingId() !== null) {
+          <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button>
+        }
+      </div>
+    </form>
+
+    <section class="card list-card">
+      <h2>Skills cadastradas</h2>
+
+      @if (skills().length === 0) {
+        <p class="empty">Nenhuma skill cadastrada.</p>
+      } @else {
+        <ul>
+          @for (skill of skills(); track skill.id) {
+            <li>
+              <div>
+                <strong>{{ skill.name }}</strong>
+                <p>{{ skill.type }} | Poder {{ skill.power }} | Memoria {{ skill.memoryCost }}</p>
+                <small>{{ skill.description }}</small>
+              </div>
+              <div class="item-actions">
+                <button type="button" (click)="edit(skill.id)">Editar</button>
+                <button type="button" class="danger" (click)="remove(skill.id)">Excluir</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</section>

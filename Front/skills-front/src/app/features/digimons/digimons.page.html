@@ -1,0 +1,99 @@
+<section class="page">
+  <header>
+    <h1>Cadastro de Digimons</h1>
+    <p>Mantenha dados completos de cada Digimon e habilidades associadas.</p>
+  </header>
+
+  <div class="grid">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="card form-card">
+      <h2>@if (editingId() !== null) { Editar Digimon } @else { Novo Digimon }</h2>
+
+      <label>
+        Nome
+        <input type="text" formControlName="name" />
+      </label>
+
+      <div class="inline-fields">
+        <label>
+          Estagio
+          <select formControlName="stage">
+            @for (stage of stages; track stage) {
+              <option [value]="stage">{{ stage }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Atributo
+          <select formControlName="attribute">
+            @for (attribute of attributes; track attribute) {
+              <option [value]="attribute">{{ attribute }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Familia
+        <input type="text" formControlName="family" />
+      </label>
+
+      <label>
+        Descricao
+        <textarea rows="3" formControlName="description"></textarea>
+      </label>
+
+      <fieldset class="skills-picker">
+        <legend>Skills</legend>
+        @if (skills().length === 0) {
+          <p class="empty">Cadastre skills primeiro para relacionar.</p>
+        } @else {
+          <div class="skill-options">
+            @for (skill of skills(); track skill.id) {
+              <label class="skill-option">
+                <input
+                  type="checkbox"
+                  [checked]="isSkillSelected(skill.id)"
+                  (change)="onSkillToggle(skill.id, $event)"
+                />
+                {{ skill.name }}
+              </label>
+            }
+          </div>
+        }
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">@if (editingId() !== null) { Salvar } @else { Cadastrar }</button>
+        @if (editingId() !== null) {
+          <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button>
+        }
+      </div>
+    </form>
+
+    <section class="card list-card">
+      <h2>Digimons cadastrados</h2>
+
+      @if (digimons().length === 0) {
+        <p class="empty">Nenhum Digimon cadastrado.</p>
+      } @else {
+        <ul>
+          @for (digimon of digimons(); track digimon.id) {
+            <li>
+              <div>
+                <strong>{{ digimon.name }}</strong>
+                <p>{{ digimon.stage }} | {{ digimon.attribute }} | {{ digimon.family }}</p>
+                <small>{{ digimon.description }}</small>
+                <small class="skills-line">Skills: {{ resolveSkillNames(digimon.skillIds) }}</small>
+              </div>
+              <div class="item-actions">
+                <button type="button" (click)="edit(digimon.id)">Editar</button>
+                <button type="button" class="danger" (click)="remove(digimon.id)">Excluir</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</section>

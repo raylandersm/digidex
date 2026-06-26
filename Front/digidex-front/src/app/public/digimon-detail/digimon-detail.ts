@@ -35,6 +35,44 @@ export class DigimonDetails implements OnInit {
   protected readonly currentDigimon =
     signal<DigimonDetail | null>(null);
 
+  private readonly moveAttributeSelection =
+    signal<Record<string, string>>({});
+
+  private readonly alternativeSkillAttributes = [
+    'FIRE',
+    'ELECTRIC',
+    'DARK'
+  ];
+
+  protected getVariantIcon(
+  attribute: string
+): string {
+
+  switch(attribute) {
+
+    case 'FLAME':
+      return '🔥';
+
+    case 'WATER':
+      return '💧';
+
+    case 'ICE':
+      return '❄️';
+
+    case 'DARK':
+      return '🌑';
+
+    case 'LIGHT':
+      return '✨';
+
+    case 'ELECTRIC':
+      return '⚡';
+
+    default:
+      return '⚔️';
+  }
+}
+
   protected readonly statOrder: Array<{
     key: keyof DigimonStat;
     label: string;
@@ -161,6 +199,13 @@ export class DigimonDetails implements OnInit {
     }
 
     if (
+      normalized.includes('dark')
+    ) {
+
+      return '🌑';
+    }
+
+    if (
       normalized.includes('plant')
     ) {
 
@@ -168,5 +213,78 @@ export class DigimonDetails implements OnInit {
     }
 
     return '⚔';
+  }
+
+  protected setSelectedMoveAttribute(
+    moveId: string,
+    attribute: string
+  ): void {
+
+    this.moveAttributeSelection.update(selection => ({
+      ...selection,
+      [moveId]: this.normalizeMoveAttribute(attribute)
+    }));
+  }
+
+  protected hasEffects(
+  variant: MoveVariant
+): boolean {
+
+  return variant.effects.length > 0;
+}
+
+  protected getMoveLabel(
+    attribute: string
+  ): string {
+
+    const normalized =
+      this.normalizeMoveAttribute(attribute);
+
+    const labels: Record<string, string> = {
+      ICE: 'Gelo',
+      FIRE: 'Fogo',
+      ELECTRIC: 'Eletrico',
+      DARK: 'Dark',
+      WATER: 'Agua',
+      PLANT: 'Planta'
+    };
+
+    return labels[normalized] ?? normalized;
+  }
+
+  private normalizeMoveAttribute(
+    attribute: string
+  ): string {
+
+    const normalized =
+      attribute
+        .trim()
+        .toUpperCase();
+
+    if (normalized.includes('ICE') || normalized.includes('GELO')) {
+      return 'ICE';
+    }
+
+    if (normalized.includes('FIRE') || normalized.includes('FOGO') || normalized.includes('FLAME')) {
+      return 'FIRE';
+    }
+
+    if (normalized.includes('ELECTRIC') || normalized.includes('ELETRIC')) {
+      return 'ELECTRIC';
+    }
+
+    if (normalized.includes('DARK')) {
+      return 'DARK';
+    }
+
+    if (normalized.includes('WATER') || normalized.includes('AGUA')) {
+      return 'WATER';
+    }
+
+    if (normalized.includes('PLANT')) {
+      return 'PLANT';
+    }
+
+    return normalized;
   }
 }

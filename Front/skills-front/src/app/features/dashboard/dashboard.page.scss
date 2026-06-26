@@ -1,0 +1,108 @@
+:host {
+  display: block;
+}
+
+.panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.hero p {
+  margin: 0.4rem 0 0;
+  color: #3f4a43;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.kpi-card {
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f5efe1;
+  border: 1px solid #e1d7be;
+}
+
+.kpi-card span {
+  font-size: 0.85rem;
+  color: #605947;
+}
+
+.kpi-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.7rem;
+  color: #1a2118;
+}
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.shortcut-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #e8f3e0;
+  border: 1px solid #b8d0ae;
+  transition: transform 0.2s ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-2px);
+}
+
+.shortcut-card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.shortcut-card p {
+  margin: 0.45rem 0 0;
+  color: #3f4a43;
+}
+
+.timeline-preview h2 {
+  margin-bottom: 0.5rem;
+}
+
+.lines {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.line-card {
+  border: 1px solid #d8d7d1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.9rem;
+}
+
+.line-card h3 {
+  margin: 0;
+}
+
+.line-card p {
+  margin: 0.35rem 0 0.75rem;
+  color: #4f4f4f;
+}
+
+.line-card ol {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.empty {
+  color: #6b6a66;
+}

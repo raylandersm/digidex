@@ -1,11 +1,17 @@
 interface DigimonMove {
   id: string;
+
   name: string;
+
   description: string;
+
   accuracy: number;
+
   power: number;
+
   spCost: number;
-  attribute: string;
+
+  variants: MoveVariant[];
+
   type: string;
-  level: number;
 }

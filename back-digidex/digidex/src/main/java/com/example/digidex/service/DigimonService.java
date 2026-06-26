@@ -4,9 +4,12 @@ import com.example.digidex.dto.*;
 import com.example.digidex.entity.*;
 import com.example.digidex.repository.DigimonRepository;
 import com.example.digidex.repository.MoveRepository;
+import com.example.digidex.repository.MoveVariantRepository;
+import com.example.digidex.repository.StatusEffectRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.Comparator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,28 +23,32 @@ public class DigimonService {
     private final DigimonRepository digimonRepository;
     private final MoveRepository moveRepository;
     private final StorageService storageService;
+    private final StatusEffectRepository statusEffectRepository;
 
+    @Transactional
     public UUID create(CreateDigimonRequest request) {
 
         Digimon digimon = new Digimon();
+
         String imageUrl = storageService.upload(request.image());
+
         digimon.setName(request.name());
         digimon.setDescription(request.description());
         digimon.setLevel(request.level());
         digimon.setDigimonAttribute(request.digimonAttribute());
         digimon.setType(request.type());
-
         digimon.setImageUrl(imageUrl);
         digimon.setEvolutionCondition(request.evolutionCondition());
 
         if (request.previousEvolutionIds() != null) {
 
-            List<Digimon> previous = digimonRepository
-                    .findAllById(request.previousEvolutionIds());
+            List<Digimon> previous =
+                    digimonRepository.findAllById(
+                            request.previousEvolutionIds()
+                    );
 
             digimon.setPreviousEvolutions(previous);
         }
-
 
         DigimonStats baseStats = buildStats(request.stats());
         DigimonStats maxStats = buildStats(request.maxStats());
@@ -49,9 +56,8 @@ public class DigimonService {
         digimon.setStats(baseStats);
         digimon.setMaxStats(maxStats);
 
-
-
         Digimon savedDigimon = digimonRepository.save(digimon);
+
         List<DigimonMove> digimonMoves = new ArrayList<>();
 
         if (request.moves() != null) {
@@ -68,43 +74,112 @@ public class DigimonService {
 
                 } else {
 
-                    move = moveRepository
-                            .findByNameIgnoreCase(
-                                    moveRequest.moveName()
-                            )
-                            .orElse(null);
+                    move = new Move();
 
-                    if (move == null) {
+                    move.setName(
+                            moveRequest.moveName()
+                    );
 
-                        move = new Move();
+                    move.setDescription(
+                            moveRequest.description()
+                    );
 
-                        move.setName(
-                                moveRequest.moveName()
-                        );
+                    move.setAccuracy(
+                            moveRequest.accuracy()
+                    );
 
-                        move.setDescription(
-                                moveRequest.description()
-                        );
+                    move.setPower(
+                            moveRequest.power()
+                    );
 
-                        move.setAccuracy(
-                                moveRequest.accuracy()
-                        );
+                    move.setSpCost(
+                            moveRequest.spCost()
+                    );
 
-                        move.setPower(
-                                moveRequest.power()
-                        );
+                    List<MoveVariant> variants =
+                            new ArrayList<>();
 
-                        move.setSpCost(
-                                moveRequest.spCost()
-                        );
+                    if (moveRequest.variants() != null) {
 
-                        move.setAttribute(
-                                moveRequest.attribute()
-                        );
+                        for (CreateMoveVariantRequest variantRequest
+                                : moveRequest.variants()) {
 
-                        move = moveRepository.save(move);
+                            MoveVariant variant =
+                                    new MoveVariant();
+
+                            variant.setMove(move);
+
+                            variant.setAttribute(
+                                    variantRequest.attribute()
+                            );
+
+                            List<MoveEffect> effects =
+                                    new ArrayList<>();
+
+                            if (variantRequest.effects() != null) {
+
+                                for (CreateMoveEffectRequest effectRequest
+                                        : variantRequest.effects()) {
+
+                                    MoveEffect effect =
+                                            new MoveEffect();
+
+                                    effect.setMoveVariant(
+                                            variant
+                                    );
+
+                                    effect.setChance(
+                                            effectRequest.chance()
+                                    );
+
+                                    effect.setVulnerableTo(
+                                            effectRequest.vulnerableTo()
+                                    );
+
+                                    effect.setBonusDamagePercent(
+                                            effectRequest.bonusDamagePercent()
+                                    );
+
+                                    effect.setRemovedBy(
+                                            effectRequest.removedBy()
+                                    );
+
+                                    StatusEffect statusEffect =
+                                            statusEffectRepository
+                                                    .findById(
+                                                            effectRequest.statusEffectId()
+                                                    )
+                                                    .orElseThrow();
+
+                                    effect.setEffect(
+                                            statusEffect
+                                    );
+
+                                    effects.add(
+                                            effect
+                                    );
+                                }
+                            }
+
+                            variant.setEffects(
+                                    effects
+                            );
+
+                            variants.add(
+                                    variant
+                            );
+                        }
                     }
+
+                    move.setVariants(
+                            variants
+                    );
+
+                    move = moveRepository.save(
+                            move
+                    );
                 }
+
                 DigimonMove digimonMove =
                         new DigimonMove();
 
@@ -120,10 +195,6 @@ public class DigimonService {
                         moveRequest.type()
                 );
 
-                digimonMove.setLevel(
-                        moveRequest.level()
-                );
-
                 digimonMoves.add(
                         digimonMove
                 );
@@ -137,9 +208,11 @@ public class DigimonService {
         digimonRepository.save(
                 savedDigimon
         );
+
         return savedDigimon.getId();
 
     }
+
 
     private DigimonStats buildStats(
             DigimonStatsRequest request
@@ -188,6 +261,18 @@ public class DigimonService {
         return digimonRepository
                 .findAll()
                 .stream()
+                .sorted(
+                        Comparator
+                                .comparingInt(
+                                        (Digimon digimon) ->
+                                                digimon
+                                                        .getLevel()
+                                                        .getOrder()
+                                )
+                                .thenComparing(
+                                        Digimon::getName
+                                )
+                )
                 .map(digimon ->
                         new DigimonListResponse(
 
@@ -236,19 +321,52 @@ public class DigimonService {
         List<DigimonMoveResponse> moves =
                 digimon.getDigimonMoves()
                         .stream()
-                        .map(digimonMove ->
-                                new DigimonMoveResponse(
-                                        digimonMove.getMove().getId(),
-                                        digimonMove.getMove().getName(),
-                                        digimonMove.getMove().getDescription(),
-                                        digimonMove.getMove().getAccuracy(),
-                                        digimonMove.getMove().getPower(),
-                                        digimonMove.getMove().getSpCost(),
-                                        digimonMove.getMove().getAttribute().name(),
-                                        digimonMove.getType().name(),
-                                        digimonMove.getLevel()
-                                )
-                        )
+                        .map(digimonMove -> {
+
+                            List<MoveVariantResponse> variants =
+                                    digimonMove.getMove()
+                                            .getVariants()
+                                            .stream()
+                                            .map(variant -> {
+
+                                                List<MoveEffectResponse> effects =
+                                                        variant.getEffects()
+                                                                .stream()
+                                                                .map(effect ->
+                                                                        new MoveEffectResponse(
+                                                                                effect.getId(),
+                                                                                effect.getEffect().getName(),
+                                                                                effect.getChance(),
+                                                                                effect.getVulnerableTo() != null
+                                                                                        ? effect.getVulnerableTo().name()
+                                                                                        : null,
+                                                                                effect.getBonusDamagePercent(),
+                                                                                effect.getRemovedBy() != null
+                                                                                        ? effect.getRemovedBy().name()
+                                                                                        : null
+                                                                        )
+                                                                )
+                                                                .toList();
+
+                                                return new MoveVariantResponse(
+                                                        variant.getId(),
+                                                        variant.getAttribute().name(),
+                                                        effects
+                                                );
+                                            })
+                                            .toList();
+
+                            return new DigimonMoveResponse(
+                                    digimonMove.getMove().getId(),
+                                    digimonMove.getMove().getName(),
+                                    digimonMove.getMove().getDescription(),
+                                    digimonMove.getMove().getAccuracy(),
+                                    digimonMove.getMove().getPower(),
+                                    digimonMove.getMove().getSpCost(),
+                                    variants,
+                                    digimonMove.getType().name()
+                            );
+                        })
                         .toList();
 
         return new DigimonDetailResponse(

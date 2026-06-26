@@ -1,0 +1,94 @@
+<section class="page">
+  <header>
+    <h1>Linhas Evolutivas</h1>
+    <p>Organize a progressao dos seus Digimons em sequencia.</p>
+  </header>
+
+  <div class="grid">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="card form-card">
+      <h2>@if (editingId() !== null) { Editar Linha } @else { Nova Linha }</h2>
+
+      <label>
+        Nome da linha
+        <input type="text" formControlName="name" />
+      </label>
+
+      <label>
+        Descricao
+        <textarea rows="2" formControlName="description"></textarea>
+      </label>
+
+      <div class="steps" formArrayName="steps">
+        <h3>Passos</h3>
+        @for (control of stepControls(); track $index) {
+          <div class="step" [formGroupName]="$index">
+            <label>
+              Digimon
+              <select formControlName="digimonId">
+                <option [value]="0">Selecione</option>
+                @for (digimon of digimonOptions(); track digimon.id) {
+                  <option [value]="digimon.id">{{ digimon.name }} ({{ digimon.stage }})</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Nota
+              <input type="text" formControlName="note" />
+            </label>
+
+            <button
+              type="button"
+              class="secondary"
+              (click)="removeStep($index)"
+              [disabled]="stepControls().length <= 2"
+            >
+              Remover passo
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="actions">
+        <button type="button" class="secondary" (click)="addStep()">Adicionar passo</button>
+        <button type="submit">@if (editingId() !== null) { Salvar } @else { Cadastrar }</button>
+        @if (editingId() !== null) {
+          <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button>
+        }
+      </div>
+    </form>
+
+    <section class="card list-card">
+      <h2>Linhas cadastradas</h2>
+
+      @if (evolutionLines().length === 0) {
+        <p class="empty">Nenhuma linha evolutiva cadastrada.</p>
+      } @else {
+        <ul>
+          @for (line of evolutionLines(); track line.id) {
+            <li>
+              <div>
+                <strong>{{ line.name }}</strong>
+                <p>{{ line.description }}</p>
+                <ol>
+                  @for (step of line.steps; track step.order) {
+                    <li>
+                      {{ step.order }}. {{ resolveDigimonName(step.digimonId) }}
+                      @if (step.note) {
+                        <span>- {{ step.note }}</span>
+                      }
+                    </li>
+                  }
+                </ol>
+              </div>
+              <div class="item-actions">
+                <button type="button" (click)="edit(line.id)">Editar</button>
+                <button type="button" class="danger" (click)="remove(line.id)">Excluir</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</section>
